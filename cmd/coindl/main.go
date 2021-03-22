@@ -1,19 +1,32 @@
 package main
 
 import (
-	"flag"
+	"fmt"
+	"os"
+
+	"github.com/markdl-dev/coin-dl/internal/cli/exchangerate"
 )
 
-type RunConfig struct {
-	showNotifications    bool
-	playNotificationBeep bool
+func main() {
+	if err := run(os.Args[1:]); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
-func main() {
-	var runConfig RunConfig
-
-	flag.BoolVar(&runConfig.showNotifications, "showNotifications", true, "show notifications")
-	flag.BoolVar(&runConfig.playNotificationBeep, "playNotificationBeep", true, "plays a beep to notify you")
-	flag.Parse()
-
+func run(args []string) error {
+	if len(args) > 0 {
+		var err error
+		switch args[0] {
+		case "xr":
+			err = exchangerate.Cmd()
+		case "ping":
+			fmt.Println("ping")
+		default:
+			fmt.Println("default")
+		}
+		return err
+	}
+	// TODO handle no command
+	return nil
 }
