@@ -13,43 +13,63 @@ import (
 	"github.com/markdl-dev/coin-dl/internal/config"
 	"github.com/markdl-dev/go-coin-gecko/coingecko"
 	"github.com/pkg/errors"
+	"github.com/theckman/yacspin"
 )
 
-const defaultCurrency = "usd"
+type exchangeRate struct {
+	exchangeRates    *coingecko.ExchangeRates
+	wantedCurrencies []string
+	config           *config.Config
+}
 
 func Cmd() error {
-	xrFlags := flag.NewFlagSet("xr", flag.ContinueOnError)
-	// TODO add usage
+	xrFlags := flag.NewFlagSet("xr", flag.ExitOnError)
+
 	var config config.Config
-	xrFlags.BoolVar(&config.ShowNotifications, "showNotifs", true, "show notification pop ups")
-	xrFlags.BoolVar(&config.PlayNotificationsBeep, "playNotifs", true, "plays a beep when a notification shows")
-	convertToCurrency := xrFlags.String("to", "usd", "Get BTC value in specified currency")
+	config.Setup(xrFlags)
+	config.YakSpinConfig.Suffix = " Getting Exchange Rates from the Gecko"
+
+	spinner, err := yacspin.New(config.YakSpinConfig)
+	if err != nil {
+		return errors.Wrap(err, "xr spinner")
+	}
+
+	toCurrenciesStr := xrFlags.String("to", "", "Get BTC value in specified currency/currencies")
 	if err := xrFlags.Parse(os.Args[2:]); err != nil {
 		return errors.Wrap(err, "xr flags")
 	}
 
-	convertToCurrencies := strings.Split(*convertToCurrency, " ")
-	if len(convertToCurrencies) == 0 {
-		convertToCurrencies = append(convertToCurrencies, defaultCurrency)
+	var toCurrenciesSlice []string
+	if len(*toCurrenciesStr) > 0 {
+		toCurrenciesSlice = strings.Split(*toCurrenciesStr, " ")
 	}
+
+	spinner.Start()
 
 	coinGeckoClient := coingecko.NewClient(nil)
 	xrList, _, err := coinGeckoClient.ExchangeRate.GetExchangeRates()
 	if err != nil {
+		spinner.StopFail()
 		return errors.Wrap(err, "xr list")
 	}
 
-	out, err := generateExchangeRateScreen(xrList, convertToCurrencies)
+	xr := exchangeRate{exchangeRates: xrList,
+		wantedCurrencies: toCurrenciesSlice,
+		config:           &config}
+
+	out, err := xr.generateExchangeRateScreen()
 	if err != nil {
+		spinner.StopFail()
 		return errors.Wrap(err, "xr screen")
 	}
 
+	spinner.Stop()
 	fmt.Print(out)
 
 	return nil
 }
 
-func generateExchangeRateScreen(exchangeRates *coingecko.ExchangeRates, currencies []string) (string, error) {
+func (e *exchangeRate) generateExchangeRateScreen() (string, error) {
 	var md string
 	md += "# Exchange Rates  \n"
 	md += time.Now().Format(time.ANSIC) + " \n"
@@ -58,16 +78,26 @@ func generateExchangeRateScreen(exchangeRates *coingecko.ExchangeRates, currenci
 	md += "\n"
 	md += "| --- | --- | --- | \n"
 
-	for _, currency := range currencies {
-		if val, ok := exchangeRates.Rates[currency]; ok {
-			ac := accounting.Accounting{Symbol: "", Precision: 2}
+	ac := accounting.Accounting{Symbol: "", Precision: 2}
+	if len(e.wantedCurrencies) == 0 {
+		for _, val := range e.exchangeRates.Rates {
 			bigFloatValue := big.NewFloat(val.Value)
 			md += "| " + val.Name + " | " + ac.FormatMoneyBigFloat(bigFloatValue) + " | " + val.Type + " \n"
-			// fmt.Println(val)
 		}
 	}
 
-	out, err := glamour.Render(md, "dark")
+	for _, currency := range e.wantedCurrencies {
+		if val, ok := e.exchangeRates.Rates[currency]; ok {
+			bigFloatValue := big.NewFloat(val.Value)
+			md += "| " + val.Name + " | " + ac.FormatMoneyBigFloat(bigFloatValue) + " | " + val.Type + " \n"
+		}
+	}
+
+	r, _ := glamour.NewTermRenderer(
+		glamour.WithAutoStyle(),
+	)
+
+	out, err := r.Render(md)
 	if err != nil {
 		return "", errors.Wrap(err, "glamour render")
 	}
