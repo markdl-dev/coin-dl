@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/markdl-dev/coin-dl/internal/cli/coins/market"
 	"github.com/markdl-dev/coin-dl/internal/cli/exchangerate"
 )
 
@@ -20,8 +21,8 @@ func run(args []string) error {
 		switch args[0] {
 		case "xr":
 			err = exchangerate.Cmd()
-		case "ping":
-			fmt.Println("ping")
+		case "market":
+			err = market.Cmd()
 		default:
 			fmt.Println("default")
 		}

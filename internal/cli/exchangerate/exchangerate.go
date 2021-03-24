@@ -34,17 +34,17 @@ func Cmd() error {
 		return errors.Wrap(err, "xr spinner")
 	}
 
-	toCurrenciesStr := xrFlags.String("to", "", "Get BTC value in specified currency/currencies")
+	toCurrenciesStr := xrFlags.String("currency", "", "Get BTC value in specified currency/currencies")
 	if err := xrFlags.Parse(os.Args[2:]); err != nil {
 		return errors.Wrap(err, "xr flags")
 	}
+
+	spinner.Start()
 
 	var toCurrenciesSlice []string
 	if len(*toCurrenciesStr) > 0 {
 		toCurrenciesSlice = strings.Split(*toCurrenciesStr, " ")
 	}
-
-	spinner.Start()
 
 	coinGeckoClient := coingecko.NewClient(nil)
 	xrList, _, err := coinGeckoClient.ExchangeRate.GetExchangeRates()
