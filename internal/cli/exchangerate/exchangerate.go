@@ -72,7 +72,7 @@ func Cmd() error {
 func (e *exchangeRate) generateExchangeRateScreen() (string, error) {
 	var md string
 	md += "# Exchange Rates  \n"
-	md += time.Now().Format(time.ANSIC) + " \n"
+	md += "🕔 " + time.Now().Format(time.ANSIC) + " \n"
 	md += "## 1 BTC \n"
 	md += "| Currency | Value | Type |"
 	md += "\n"
