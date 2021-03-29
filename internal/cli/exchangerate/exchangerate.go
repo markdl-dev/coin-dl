@@ -16,6 +16,13 @@ import (
 	"github.com/theckman/yacspin"
 )
 
+// const CmdName = "exchange"
+
+const (
+	CmdName                 = "exchange"
+	currencyFlagDescription = "Get BTC value in specified currency/currencies"
+)
+
 type exchangeRate struct {
 	exchangeRates    *coingecko.ExchangeRates
 	wantedCurrencies []string
@@ -23,34 +30,37 @@ type exchangeRate struct {
 }
 
 func Cmd() error {
-	xrFlags := flag.NewFlagSet("xr", flag.ExitOnError)
+	exchangeRateFlag := flag.NewFlagSet(CmdName, flag.ExitOnError)
 
 	var config config.Config
-	config.Setup(xrFlags)
+	config.Setup(exchangeRateFlag)
 	config.YakSpinConfig.Suffix = " Getting Exchange Rates from the Gecko"
 
 	spinner, err := yacspin.New(config.YakSpinConfig)
 	if err != nil {
-		return errors.Wrap(err, "xr spinner")
+		return errors.Wrap(err, "exchangerate spinner")
 	}
 
-	toCurrenciesStr := xrFlags.String("currency", "", "Get BTC value in specified currency/currencies")
-	if err := xrFlags.Parse(os.Args[2:]); err != nil {
-		return errors.Wrap(err, "xr flags")
+	var toCurrenciesStr string
+	exchangeRateFlag.StringVar(&toCurrenciesStr, "currency", "", currencyFlagDescription)
+	exchangeRateFlag.StringVar(&toCurrenciesStr, "cr", "", currencyFlagDescription+" (shorthand)")
+
+	if err := exchangeRateFlag.Parse(os.Args[2:]); err != nil {
+		return errors.Wrap(err, "exchangerate flags")
 	}
 
 	spinner.Start()
 
 	var toCurrenciesSlice []string
-	if len(*toCurrenciesStr) > 0 {
-		toCurrenciesSlice = strings.Split(*toCurrenciesStr, " ")
+	if len(toCurrenciesStr) > 0 {
+		toCurrenciesSlice = strings.Split(toCurrenciesStr, " ")
 	}
 
 	coinGeckoClient := coingecko.NewClient(nil)
 	xrList, _, err := coinGeckoClient.ExchangeRate.GetExchangeRates()
 	if err != nil {
 		spinner.StopFail()
-		return errors.Wrap(err, "xr list")
+		return errors.Wrap(err, "exchangerate list")
 	}
 
 	xr := exchangeRate{exchangeRates: xrList,
@@ -60,7 +70,7 @@ func Cmd() error {
 	out, err := xr.generateExchangeRateScreen()
 	if err != nil {
 		spinner.StopFail()
-		return errors.Wrap(err, "xr screen")
+		return errors.Wrap(err, "exchangerate screen")
 	}
 
 	spinner.Stop()
@@ -78,6 +88,7 @@ func (e *exchangeRate) generateExchangeRateScreen() (string, error) {
 	md += "\n"
 	md += "| --- | --- | --- | \n"
 
+	// setup accounting with no symbol(rest api result does not have symbols) and 2 decimal precision
 	ac := accounting.Accounting{Symbol: "", Precision: 2}
 	if len(e.wantedCurrencies) == 0 {
 		for _, val := range e.exchangeRates.Rates {
@@ -99,7 +110,7 @@ func (e *exchangeRate) generateExchangeRateScreen() (string, error) {
 
 	out, err := r.Render(md)
 	if err != nil {
-		return "", errors.Wrap(err, "glamour render")
+		return "", errors.Wrap(err, "exchangerate glamour render")
 	}
 
 	return out, nil

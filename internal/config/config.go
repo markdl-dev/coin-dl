@@ -7,6 +7,13 @@ import (
 	"github.com/theckman/yacspin"
 )
 
+const (
+	showNotifsFlagValue           = true
+	playNotifsFlagValue           = true
+	showNotifsFlagDescription     = "show notification pop ups"
+	showPlayNotifsFlagDescription = "plays a beep when a notification shows"
+)
+
 // Config is common for all the main command
 type Config struct {
 	ShowNotifications     bool
@@ -14,9 +21,11 @@ type Config struct {
 	YakSpinConfig         yacspin.Config
 }
 
-func (c *Config) Setup(flags *flag.FlagSet) {
-	flags.BoolVar(&c.ShowNotifications, "showNotifs", true, "show notification pop ups")
-	flags.BoolVar(&c.PlayNotificationsBeep, "playNotifs", true, "plays a beep when a notification shows")
+func (c *Config) Setup(flagSet *flag.FlagSet) {
+	flagSet.BoolVar(&c.ShowNotifications, "showNotifs", showNotifsFlagValue, showNotifsFlagDescription)
+	flagSet.BoolVar(&c.PlayNotificationsBeep, "playNotifs", playNotifsFlagValue, showPlayNotifsFlagDescription)
+	flagSet.BoolVar(&c.ShowNotifications, "sn", showNotifsFlagValue, showNotifsFlagDescription+" (shorthand)")
+	flagSet.BoolVar(&c.PlayNotificationsBeep, "pn", playNotifsFlagValue, showPlayNotifsFlagDescription+" (shorthand)")
 
 	c.YakSpinConfig = yacspin.Config{
 		Frequency:         100 * time.Millisecond,

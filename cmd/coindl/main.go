@@ -19,9 +19,9 @@ func run(args []string) error {
 	if len(args) > 0 {
 		var err error
 		switch args[0] {
-		case "xr":
+		case exchangerate.CmdName:
 			err = exchangerate.Cmd()
-		case "market":
+		case market.CmdName:
 			err = market.Cmd()
 		default:
 			fmt.Println("default")

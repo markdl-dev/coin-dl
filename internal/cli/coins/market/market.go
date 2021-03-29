@@ -15,6 +15,14 @@ import (
 	"github.com/theckman/yacspin"
 )
 
+const (
+	CmdName                 = "market"
+	coinsFlagValue          = "bitcoin"
+	coinsFlagDescription    = "Space separated cryptocurrency symbols(ex. bitcoin, etheruem). Refer to coins list command."
+	currencyFlagValue       = "usd"
+	currencyFlagDescription = "The target currency of the market data(ex. usd). One currency only."
+)
+
 type market struct {
 	currency    string
 	coinsMarket *coingecko.CoinsMarket
@@ -22,7 +30,7 @@ type market struct {
 }
 
 func Cmd() error {
-	marketFlags := flag.NewFlagSet("market", flag.ExitOnError)
+	marketFlags := flag.NewFlagSet(CmdName, flag.ExitOnError)
 
 	var config config.Config
 	config.Setup(marketFlags)
@@ -33,30 +41,33 @@ func Cmd() error {
 		return errors.Wrap(err, "market spinner")
 	}
 
-	coinsStr := marketFlags.String("coins", "bitcoin", "Space separated cryptocurrency symbols(ex. bitcoin, etheruem). Refer to coins list command.")
-	currency := marketFlags.String("currency", "usd", "The target currency of the market data(ex. usd). One currency only.")
+	var coinsStr string
+	var currency string
+
+	marketFlags.StringVar(&coinsStr, "coins", coinsFlagValue, coinsFlagDescription)
+	marketFlags.StringVar(&coinsStr, "c", coinsFlagValue, coinsFlagDescription+" (shorthand)")
+	marketFlags.StringVar(&currency, "currency", currencyFlagValue, currencyFlagDescription)
+	marketFlags.StringVar(&currency, "cr", currencyFlagValue, currencyFlagDescription+" (shorthand)")
 
 	if err := marketFlags.Parse(os.Args[2:]); err != nil {
 		return errors.Wrap(err, "market flags")
 	}
-
 	spinner.Start()
 
 	var coinsSlice []string
-	if len(*coinsStr) > 0 {
-		coinsSlice = strings.Split(*coinsStr, " ")
+	if len(coinsStr) > 0 {
+		coinsSlice = strings.Split(coinsStr, " ")
 	}
 
-	fmt.Println(coinsSlice)
 	coinGeckoClient := coingecko.NewClient(nil)
-	marketRes, _, err := coinGeckoClient.Coins.GetMarkets(*currency, coinsSlice)
+	marketRes, _, err := coinGeckoClient.Coins.GetMarkets(currency, coinsSlice)
 	if err != nil {
 		spinner.StopFail()
 		return errors.Wrap(err, "market result")
 	}
 
 	market := market{
-		currency:    *currency,
+		currency:    currency,
 		coinsMarket: marketRes,
 		config:      &config,
 	}
@@ -76,28 +87,28 @@ func Cmd() error {
 func (m *market) generateMarketScreen() (string, error) {
 	var md string
 	md += "# Market Data \n"
-	md += "🕔 " + time.Now().Format(time.ANSIC) + " \n"
+	md += "🕔  " + time.Now().Format(time.ANSIC) + " \n\n"
 	md += "## Currency: " + strings.ToUpper(m.currency) + " \n"
 	md += "| | Name | Price | 1h | 24h | 7d | 14d | 30d |"
 	md += "\n"
 	md += "| --- | --- | --- | --- | --- | --- | --- | --- | \n"
 
 	for _, marketData := range *m.coinsMarket {
-		currentPrice := coinvalue.New(marketData.CurrentPrice)
-		pcp1h := coinvalue.New(marketData.PriceChangePercentage1hInCurrency)
-		pcp24h := coinvalue.New(marketData.PriceChange24H)
-		pcp7D := coinvalue.New(marketData.PriceChangePercentage7DInCurrency)
-		pcp14D := coinvalue.New(marketData.PriceChangePercentage14DInCurrency)
-		pcp30D := coinvalue.New(marketData.PriceChangePercentage30DInCurrency)
+		currentPrice := coinvalue.New(&marketData.CurrentPrice)
+		PCP1H := coinvalue.New(marketData.PriceChangePercentage1HInCurrency)
+		PCP24H := coinvalue.New(marketData.PriceChangePercentage24HInCurrency)
+		PCP7D := coinvalue.New(marketData.PriceChangePercentage7DInCurrency)
+		PCP14D := coinvalue.New(marketData.PriceChangePercentage14DInCurrency)
+		PCP30D := coinvalue.New(marketData.PriceChangePercentage30DInCurrency)
 
 		md += "| " + strings.ToUpper(marketData.Symbol) + " | " +
 			strings.ToUpper(marketData.Name) + " | " +
 			currentPrice.Value + " | " +
-			pcp1h.Emojicon + " " + pcp1h.Value + " | " +
-			pcp24h.Emojicon + " " + pcp24h.Value + " | " +
-			pcp7D.Emojicon + " " + pcp7D.Value + " | " +
-			pcp14D.Emojicon + " " + pcp14D.Value + " | " +
-			pcp30D.Emojicon + " " + pcp30D.Value + " | \n"
+			PCP1H.Emojicon + " " + PCP1H.Value + " | " +
+			PCP24H.Emojicon + " " + PCP24H.Value + " | " +
+			PCP7D.Emojicon + " " + PCP7D.Value + " | " +
+			PCP14D.Emojicon + " " + PCP14D.Value + " | " +
+			PCP30D.Emojicon + " " + PCP30D.Value + " | \n"
 
 	}
 

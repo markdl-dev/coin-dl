@@ -11,16 +11,19 @@ type CoinValue struct {
 	Emojicon string
 }
 
-func New(value float64) CoinValue {
-	cv := CoinValue{}
-	ac := accounting.Accounting{Symbol: "", Precision: 2}
+func New(value *float64) CoinValue {
+	cv := CoinValue{Value: "n/a"}
 
+	if value == nil {
+		return cv
+	}
+	ac := accounting.Accounting{Symbol: "", Precision: 2}
 	cv.Emojicon = "✅"
-	if value < 0 {
+	if *value < 0 {
 		cv.Emojicon = "🔻"
 	}
 
-	bigFloatValue := big.NewFloat(value)
+	bigFloatValue := big.NewFloat(*value)
 	cv.Value = ac.FormatMoneyBigFloat(bigFloatValue)
 
 	return cv
