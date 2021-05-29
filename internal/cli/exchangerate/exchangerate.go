@@ -16,8 +16,6 @@ import (
 	"github.com/theckman/yacspin"
 )
 
-// const CmdName = "exchange"
-
 const (
 	CmdName                 = "exchange"
 	currencyFlagDescription = "Get BTC value in specified currency/currencies"

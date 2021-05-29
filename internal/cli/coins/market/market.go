@@ -25,7 +25,7 @@ const (
 
 type market struct {
 	currency    string
-	coinsMarket *coingecko.CoinsMarket
+	coinsMarket *coingecko.CoinsMarketData
 	config      *config.Config
 }
 

@@ -32,6 +32,8 @@ github.com/lucasb-eyer/go-colorful v1.0.3 h1:QIbQXiugsb+q10B+MI+7DI1oQLdmnep86tW
 github.com/lucasb-eyer/go-colorful v1.0.3/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/markdl-dev/go-coin-gecko v0.0.0-20210322213611-d02ede4757b7 h1:dHNzGGz/YlBIUjmOGQF+RupF14WIful3An64s9HgZC8=
 github.com/markdl-dev/go-coin-gecko v0.0.0-20210322213611-d02ede4757b7/go.mod h1:FT8UId/Bpcjb3d+u/IqUNj/SMgaCLuxO1igbeGj0VpM=
+github.com/markdl-dev/go-coin-gecko v0.0.0-20210529050911-5c49677e6f36 h1:GJRth1y+qFATU+5kV8VdTor4lpsdgONHmhIY54hMMlg=
+github.com/markdl-dev/go-coin-gecko v0.0.0-20210529050911-5c49677e6f36/go.mod h1:FT8UId/Bpcjb3d+u/IqUNj/SMgaCLuxO1igbeGj0VpM=
 github.com/mattn/go-colorable v0.1.6/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
 github.com/mattn/go-colorable v0.1.8 h1:c1ghPdyEDarC70ftn0y+A/Ee++9zz8ljHG1b13eJ0s8=
 github.com/mattn/go-colorable v0.1.8/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
