@@ -85,13 +85,16 @@ func Cmd() error {
 }
 
 func (m *market) generateMarketScreen() (string, error) {
-	var md string
-	md += "# Market Data \n"
-	md += "🕔  " + time.Now().Format(time.ANSIC) + " \n\n"
-	md += "## Currency: " + strings.ToUpper(m.currency) + " \n"
-	md += "| | Name | Price | 1h | 24h | 7d | 14d | 30d |"
-	md += "\n"
-	md += "| --- | --- | --- | --- | --- | --- | --- | --- | \n"
+	var markdownBuilder strings.Builder
+	var markdown string
+
+	markdownBuilder.WriteString("# Market Data \n")
+	markdown = fmt.Sprintf("🕔 %s \n\n", time.Now().Format(time.ANSIC))
+	markdownBuilder.WriteString(markdown)
+	markdown = fmt.Sprintf("## Currency: %s \n", strings.ToUpper(m.currency))
+	markdownBuilder.WriteString(markdown)
+	markdownBuilder.WriteString("| | Name | Price | 1h | 24h | 7d | 14d | 30d | \n")
+	markdownBuilder.WriteString("| --- | --- | --- | --- | --- | --- | --- | --- | \n")
 
 	for _, marketData := range *m.coinsMarket {
 		currentPrice := coinvalue.New(&marketData.CurrentPrice)
@@ -101,15 +104,17 @@ func (m *market) generateMarketScreen() (string, error) {
 		PCP14D := coinvalue.New(marketData.PriceChangePercentage14DInCurrency)
 		PCP30D := coinvalue.New(marketData.PriceChangePercentage30DInCurrency)
 
-		md += "| " + strings.ToUpper(marketData.Symbol) + " | " +
-			strings.ToUpper(marketData.Name) + " | " +
-			currentPrice.Value + " | " +
-			PCP1H.Emojicon + " " + PCP1H.Value + " | " +
-			PCP24H.Emojicon + " " + PCP24H.Value + " | " +
-			PCP7D.Emojicon + " " + PCP7D.Value + " | " +
-			PCP14D.Emojicon + " " + PCP14D.Value + " | " +
-			PCP30D.Emojicon + " " + PCP30D.Value + " | \n"
+		markdown = fmt.Sprintf("| %s | %s | %s | %s %s | %s %s | %s %s | %s %s | %s %s | \n",
+			strings.ToUpper(marketData.Symbol),
+			strings.ToUpper(marketData.Name),
+			currentPrice.Value,
+			PCP1H.Emojicon, PCP1H.Value,
+			PCP24H.Emojicon, PCP24H.Value,
+			PCP7D.Emojicon, PCP7D.Value,
+			PCP14D.Emojicon, PCP14D.Value,
+			PCP30D.Emojicon, PCP30D.Value)
 
+		markdownBuilder.WriteString(markdown)
 	}
 
 	glam, _ := glamour.NewTermRenderer(
@@ -117,7 +122,7 @@ func (m *market) generateMarketScreen() (string, error) {
 		glamour.WithWordWrap(100),
 	)
 
-	out, err := glam.Render(md)
+	out, err := glam.Render(markdownBuilder.String())
 	if err != nil {
 		return "", errors.Wrap(err, "glamour render")
 	}

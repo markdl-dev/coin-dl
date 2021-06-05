@@ -81,12 +81,20 @@ func Cmd() error {
 }
 
 func (i *coinInfo) generateInfoScreen() (string, error) {
-	var md string
-	md += "# " + i.coin.Name + " (" + i.coin.Symbol + ") \n"
+	var markdownBuilder strings.Builder
+	var markdown string
+	markdown = fmt.Sprintf("# %s (%s) \n", i.coin.Name, i.coin.Symbol)
+	markdownBuilder.WriteString(markdown)
+
 	// date time
-	md += "🕔  " + time.Now().Format(time.ANSIC) + " \n\n"
+	markdown = fmt.Sprintf("🕔 %s \n\n", time.Now().Format(time.ANSIC))
+	markdownBuilder.WriteString(markdown)
+
 	// current price / percentage
-	md += "## Current Price - " + strings.ToUpper(i.currency) + " \n"
+	currencyDisplay := strings.ToUpper(i.currency)
+	markdown = fmt.Sprintf("## Current Price - %s \n", currencyDisplay)
+	markdownBuilder.WriteString(markdown)
+
 	currentPriceFloat := i.coin.MarketData.CurrentPrice[i.currency]
 	currentPrice := coinvalue.New(&currentPriceFloat)
 
@@ -94,42 +102,50 @@ func (i *coinInfo) generateInfoScreen() (string, error) {
 	PCP24H := coinvalue.New(&PCP24HFloat)
 
 	// market cap
-	currencyDisplay := strings.ToUpper(i.currency)
-	md += "- " + currencyDisplay + " **" + currentPrice.Value + "** " + PCP24H.Emojicon + " *" + PCP24H.Value +
-		"% in the last 24 hours* \n"
+	markdown = fmt.Sprintf("- %s **%s** %s *%s%% in the last 24 hours* \n", currencyDisplay,
+		currentPrice.Value, PCP24H.Emojicon, PCP24H.Value)
+	markdownBuilder.WriteString(markdown)
 
 	marketCapFloat := i.coin.MarketData.MarketCap[i.currency]
 	marketCap := coinvalue.New(&marketCapFloat)
 
 	marketCapRank := strconv.Itoa(int(i.coin.MarketCapRank))
-	md += "## Market Cap - Rank " + marketCapRank + "\n"
-	md += "- " + currencyDisplay + " " + marketCap.Value + " \n\n"
+	markdown = fmt.Sprintf("## Market Cap - Rank %s \n", marketCapRank)
+	markdownBuilder.WriteString(markdown)
+
+	markdown = fmt.Sprintf("- %s %s \n\n", currencyDisplay, marketCap.Value)
+	markdownBuilder.WriteString(markdown)
 
 	circulatingSupply := coinvalue.New(&i.coin.MarketData.CirculatingSupply)
-	md += "- Circulating Supply: " + circulatingSupply.Value + " \n"
+	markdown = fmt.Sprintf("- Circulating Supply: %s \n", circulatingSupply.Value)
+	markdownBuilder.WriteString(markdown)
 
 	// 24 hour info
-	md += "## 24 Hour Update \n\n"
+	markdownBuilder.WriteString("## 24 Hour Update \n\n")
 
 	tradingVolumeFloat := i.coin.MarketData.TotalVolume[i.currency]
 	tradingVolume := coinvalue.New(&tradingVolumeFloat)
 
-	md += "- Trading Vol. " + tradingVolume.Value + " \n\n"
+	markdown = fmt.Sprintf("- Trading Vol. %s \n\n", tradingVolume.Value)
+	markdownBuilder.WriteString(markdown)
+
 	high24HFloat := i.coin.MarketData.High24H[i.currency]
 	high24H := coinvalue.New(&high24HFloat)
 
 	low24HFloat := i.coin.MarketData.Low24H[i.currency]
 	low24H := coinvalue.New(&low24HFloat)
-	md += "| 24h Low | 24h High |"
-	md += "\n"
-	md += "| --- | --- | \n"
-	md += "| " + low24H.Value + " | " + high24H.Value + "| \n"
+	// md += "| 24h Low | 24h High |"
+	// md += "\n"
+	// md += "| --- | --- | \n"
+	markdown = "| 24h Low | 24h High | \n | --- | --- | \n"
+	markdownBuilder.WriteString(markdown)
 
-	// links - website
-	md += "## 🔗 Links \n"
+	// md += "| " + low24H.Value + " | " + high24H.Value + "| \n"
+	markdown = fmt.Sprintf("| %s | %s | \n", low24H.Value, high24H.Value)
+	markdownBuilder.WriteString(markdown)
 
 	linksMarkDown := i.BuildLinksMarkDown()
-	md += linksMarkDown
+	markdownBuilder.WriteString(linksMarkDown)
 
 	// TODO add description only on full details sub command
 	// md += "## 📖 Description \n"
@@ -140,7 +156,7 @@ func (i *coinInfo) generateInfoScreen() (string, error) {
 		glamour.WithWordWrap(100),
 	)
 
-	out, err := glam.Render(md)
+	out, err := glam.Render(markdownBuilder.String())
 	if err != nil {
 		return "", errors.Wrap(err, "glamour render")
 	}
@@ -152,7 +168,7 @@ func (i *coinInfo) BuildLinksMarkDown() string {
 	var linksMarkDown strings.Builder
 	links := i.coin.Links
 
-	linksMarkDown.WriteString("\n Website \n")
+	linksMarkDown.WriteString("## 🌏 Website \n")
 
 	// home page
 	var homePageLinksStringBuilder strings.Builder
@@ -167,7 +183,7 @@ func (i *coinInfo) BuildLinksMarkDown() string {
 	}
 	linksMarkDown.WriteString(homePageLinksStringBuilder.String())
 
-	linksMarkDown.WriteString("\n Explorers \n")
+	linksMarkDown.WriteString("## 🔎 Explorers \n")
 
 	// block chain site
 	var blockChainLinksStringBuilder strings.Builder
@@ -180,7 +196,7 @@ func (i *coinInfo) BuildLinksMarkDown() string {
 	}
 	linksMarkDown.WriteString(blockChainLinksStringBuilder.String())
 
-	linksMarkDown.WriteString("\n Community \n")
+	linksMarkDown.WriteString("## 🗣  Community \n")
 
 	// official forum
 	var officialForumLinkStringBuilder strings.Builder
@@ -211,7 +227,7 @@ func (i *coinInfo) BuildLinksMarkDown() string {
 		linksMarkDown.WriteString(subredditLinkMD)
 	}
 
-	linksMarkDown.WriteString("\n Source Code \n")
+	linksMarkDown.WriteString("## 🧑‍💻 Source Code \n")
 
 	var reposLinkStringBuilder strings.Builder
 	// github repos url

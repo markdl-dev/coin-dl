@@ -3,13 +3,12 @@ package exchangerate
 import (
 	"flag"
 	"fmt"
-	"math/big"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/glamour"
-	"github.com/leekchan/accounting"
+	"github.com/markdl-dev/coin-dl/internal/coinvalue"
 	"github.com/markdl-dev/coin-dl/internal/config"
 	"github.com/markdl-dev/go-coin-gecko/coingecko"
 	"github.com/pkg/errors"
@@ -78,27 +77,35 @@ func Cmd() error {
 }
 
 func (e *exchangeRate) generateExchangeRateScreen() (string, error) {
-	var md string
-	md += "# Exchange Rates  \n"
-	md += "🕔 " + time.Now().Format(time.ANSIC) + " \n"
-	md += "## 1 BTC \n"
-	md += "| Currency | Value | Type |"
-	md += "\n"
-	md += "| --- | --- | --- | \n"
+	var markdownBuilder strings.Builder
+	var markdown string
+	markdownBuilder.WriteString("# Exchange Rates  \n")
+	markdown = fmt.Sprintf("🕔 %s \n", time.Now().Format(time.ANSIC))
+	markdownBuilder.WriteString(markdown)
+	markdownBuilder.WriteString("## 1 BTC \n")
+	markdownBuilder.WriteString("| Currency | Value | Type | \n")
+	markdownBuilder.WriteString("| --- | --- | --- | \n")
 
 	// setup accounting with no symbol(rest api result does not have symbols) and 2 decimal precision
-	ac := accounting.Accounting{Symbol: "", Precision: 2}
 	if len(e.wantedCurrencies) == 0 {
 		for _, val := range e.exchangeRates.Rates {
-			bigFloatValue := big.NewFloat(val.Value)
-			md += "| " + val.Name + " | " + ac.FormatMoneyBigFloat(bigFloatValue) + " | " + val.Type + " \n"
+			exchangeRate := coinvalue.New(&val.Value)
+			markdown = fmt.Sprintf("| %s | %s | %s | \n",
+				val.Name,
+				exchangeRate.Value,
+				val.Type)
+			markdownBuilder.WriteString(markdown)
 		}
 	}
 
 	for _, currency := range e.wantedCurrencies {
 		if val, ok := e.exchangeRates.Rates[currency]; ok {
-			bigFloatValue := big.NewFloat(val.Value)
-			md += "| " + val.Name + " | " + ac.FormatMoneyBigFloat(bigFloatValue) + " | " + val.Type + " \n"
+			exchangeRate := coinvalue.New(&val.Value)
+			markdown = fmt.Sprintf("| %s | %s | %s | \n",
+				val.Name,
+				exchangeRate.Value,
+				val.Type)
+			markdownBuilder.WriteString(markdown)
 		}
 	}
 
@@ -106,7 +113,7 @@ func (e *exchangeRate) generateExchangeRateScreen() (string, error) {
 		glamour.WithAutoStyle(),
 	)
 
-	out, err := r.Render(md)
+	out, err := r.Render(markdownBuilder.String())
 	if err != nil {
 		return "", errors.Wrap(err, "exchangerate glamour render")
 	}
